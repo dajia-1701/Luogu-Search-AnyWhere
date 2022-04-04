@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Luogu Search AnyWhere
 // @namespace    https://greasyfork.org/users/829530
-// @version      0.3.4-X
+// @version      0.3.4-X1
 // @description  Search AnyWhere in Luogu!
 // @author       tiger2005 & d0j1a_1701
 // @match        https://www.luogu.com.cn/*
@@ -1021,10 +1021,11 @@
         });
         let searchAnywhereOpen = false;
         let inject_interval = setInterval(function(){
-            if($('.user-nav > nav > div > a').length == 0) return;
+            if($('.search-wrap').length == 0) return;
+            let en = $('.user-nav .search-wrap').next();
             $(".user-nav .search-wrap").remove();
-            $('.user-nav > nav > div > a').css("margin-left", "10px");
-            $('.user-nav > nav > div > a').unbind('click').click(function(){
+            en.css("margin-left", "10px");
+            en.unbind('click').click(function(){
                 if(! searchAnywhereOpen){
                     $(".searchAnywhere").css("display", "block");
                     setTimeout(() => {
