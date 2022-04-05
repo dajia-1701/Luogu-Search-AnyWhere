@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Luogu Search AnyWhere
-// @namespace    https://greasyfork.org/users/829530
-// @version      0.3.4-X1
+// @namespace    https://greasyfork.org/
+// @version      0.3.4-X2
 // @description  Search AnyWhere in Luogu!
 // @author       tiger2005 & d0j1a_1701
 // @match        https://www.luogu.com.cn/*
@@ -58,6 +58,23 @@
         }
         localStorage.setItem("lsaw_settings", JSON.stringify(settings));
         //console.log(document.getElementsByTagName('head')[0].innerHTML = document.getElementsByTagName('head')[0].innerHTML.replace('default-src \'unsafe-inline\' luogu.com.cn *.luogu.com.cn luogu.org *.luogu.org *.cnzz.com luoguprivate.oss-cn-hangzhou.aliyuncs.com luogu.oss-cn-hangzhou.aliyuncs.com wss: blob:; img-src * data:; font-src * data:; frame-src https://player.bilibili.com https://www.bilibili.com','default-src \'unsafe-inline\' luogu.com.cn *.luogu.com.cn luogu.org *.luogu.org *.cnzz.com luoguprivate.oss-cn-hangzhou.aliyuncs.com luogu.oss-cn-hangzhou.aliyuncs.com luogulo.gq wss: blob:; img-src * data:; font-src * data:; frame-src https://player.bilibili.com https://www.bilibili.com'));
+        let discuss_link = document.querySelectorAll('a');
+        for(let link of discuss_link){
+            if(link.href.indexOf('/discuss/show?postid')==-1) continue;
+            let d_id_l = link.href.match(/[0-9]/g);
+            let d_id = '';
+            for(let x of d_id_l) d_id += x;
+            GM.xmlHttpRequest({
+                    method: "get",
+                    url: `https://luogulo.gq/show.php?url=https://www.luogu.com.cn/discuss/${d_id}`,
+                    onload: function(res){
+                        if(res.status != 200){
+                            return;
+                        }
+                        console.info(`[LSA-X] Successfully saved discuss: https://www.luogu.com.cn/discuss/${d_id}`)
+                    }
+                });
+        }
         $("body").append(`
         <style>
             .searchAnywhere{
@@ -594,150 +611,150 @@
             </div>
         </div>
     `);
-        $(".inputArea > input").focus(function(){
-            $(this).parent().addClass("onFocus");
-        });
-        $(".inputArea > input").blur(function(){
-            $(this).parent().removeClass("onFocus");
-            if($(this).val().length != 0)
-                $(this).parent().addClass("withContent");
-            else
-                $(this).parent().removeClass("withContent");
-        });
-        $(".inputArea").mouseenter(function(){
-            $(this).addClass("onHover");
-        });
-        $(".inputArea").mouseleave(function(){
-            $(this).removeClass("onHover");
-        });
-        $(".inputAreaSmall > input").focus(function(){
-            $(this).parent().addClass("onFocus");
-        });
-        $(".inputAreaSmall > input").blur(function(){
-            $(this).parent().removeClass("onFocus");
-            if($(this).val().length != 0)
-                $(this).parent().addClass("withContent");
-            else
-                $(this).parent().removeClass("withContent");
-        });
-        $(".inputAreaSmall").mouseenter(function(){
-            $(this).addClass("onHover");
-        });
-        $(".inputAreaSmall").mouseleave(function(){
-            $(this).removeClass("onHover");
-        });
-        $(".searchAnywhereClicky").click(function(){
-            var a = $(this).attr("flag");
-            if(a == "false"){
-                a = true;
-                $(this).attr("flag", a);
-            }
-            else{
-                a = false;
-                $(this).attr("flag", a);
-            }
-            var settingsName = $(this).parent().attr("for");
-            settings[settingsName] = a;
-            localStorage.setItem("lsaw_settings", JSON.stringify(settings));
-        })
-        $(".inputAreaSmall input").change(function(){
-            var a = Number($(this).val());
-            var settingsName = $(this).parent().parent().parent().attr("for");
-            settings[settingsName] = a;
-            localStorage.setItem("lsaw_settings", JSON.stringify(settings));
-        })
-        $(".searchAnywhereCloseSettings").click(function(){
-            $(".searchAnywhereSettings").css("opacity", "0");
-            setTimeout(() => {
-                $(".searchAnywhereSettings").css("display", "none");
-            }, 200);
-        })
-        $(".searchAnywhereSettingsLink").click(function(){
-            $(".searchAnywhereSettings").css("display", "block");
-            setTimeout(() => {
-                $(".searchAnywhereSettings").css("opacity", "1");
-            }, 20);
-        })
-
-        const getColorFromPercent = (x, opa) => {
-            let r = 0, g = 0, b = 0;
-            let rr = 231, gg = 76, bb = 60;
-            let rrr = 82, ggg = 196, bbb = 26;
-            // if(x < 0.5){
-            //  r = 255;
-            //  g = one * x;
-            // }
-            // else{
-            //  r = 255 - ((x - 0.5) * one);
-            //  g = 255;
-            // }
-            r = rr + (rrr - rr) * x;
-            g = gg + (ggg - gg) * x;
-            b = bb + (bbb - bb) * x;
-            r += (60 - r) * (1 - opa);
-            g += (60 - g) * (1 - opa);
-            b += (60 - b) * (1 - opa);
-            r = Math.floor(r);
-            g = Math.floor(g);
-            b = Math.floor(b);
-            return `rgb(${r}, ${g}, ${b})`;
-        };
-
-        const problemColors = [ "Gray", "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Black" ];
-        const problemNames = [ "暂无评定", "入门", "普及-", "普及/提高-", "普及+/提高", "提高+/省选-", "省选/NOI-", "NOI/NOI+/CTSC" ];
-        var searchTimeout = null;
-        var currentHoverCard = undefined;
-        const changeHoverCard = (x, scroll = true, align = false) => {
-            $(".searchCard.light").removeClass("light");
-            if(x != undefined && scroll)
-                $(".searchAnywhereMainInput > input").blur();
-            if(x != undefined){
-                x.addClass("light").focus(align);
-                if(scroll){
-                    var heg = x[0].offsetTop;
-                    var prr = x.parent().parent();
-                    var scr = prr.scrollTop();
-                    var r = heg - x.outerHeight() + 5, l = r - prr.outerHeight() + x.outerHeight() + 10;
-                    scr = Math.max(l, Math.min(r, scr));
-                    prr.scrollTop(scr);
+            $(".inputArea > input").focus(function(){
+                $(this).parent().addClass("onFocus");
+            });
+            $(".inputArea > input").blur(function(){
+                $(this).parent().removeClass("onFocus");
+                if($(this).val().length != 0)
+                    $(this).parent().addClass("withContent");
+                else
+                    $(this).parent().removeClass("withContent");
+            });
+            $(".inputArea").mouseenter(function(){
+                $(this).addClass("onHover");
+            });
+            $(".inputArea").mouseleave(function(){
+                $(this).removeClass("onHover");
+            });
+            $(".inputAreaSmall > input").focus(function(){
+                $(this).parent().addClass("onFocus");
+            });
+            $(".inputAreaSmall > input").blur(function(){
+                $(this).parent().removeClass("onFocus");
+                if($(this).val().length != 0)
+                    $(this).parent().addClass("withContent");
+                else
+                    $(this).parent().removeClass("withContent");
+            });
+            $(".inputAreaSmall").mouseenter(function(){
+                $(this).addClass("onHover");
+            });
+            $(".inputAreaSmall").mouseleave(function(){
+                $(this).removeClass("onHover");
+            });
+            $(".searchAnywhereClicky").click(function(){
+                var a = $(this).attr("flag");
+                if(a == "false"){
+                    a = true;
+                    $(this).attr("flag", a);
                 }
-            }
-            if(scroll){ // remove mouse event
-                $(".searchCard").unbind('mouseenter').unbind('mouseleave');
-                $(document).mousemove(() => {
-                    $(document).unbind('mousemove');
-                    $(".searchCard").unbind('mouseenter').unbind('mouseleave').hover(function(){
-                        changeHoverCard($(this), false);
-                    }, function(){
-                        changeHoverCard(undefined, false);
-                    });
-                })
-            }
-            currentHoverCard = x;
-        }
-        const searchInfo = () => {
-            searchTimeout = null;
-            var info = $(".inputArea > input").val();
-            info = $.trim(info);
-            if(info == ""){
-                $(".searchAnywhereContent").html("");
-                return;
-            }
-            //$(".searchAnywhereContent").html(`<div><div style='text-align: center; margin-bottom: 10px; width: 100%; font-size: 20px;'>加载中……</div></div>`);
-            $(".searchAnywhereContent > div").unbind('click').click((event) => {
-                event.stopPropagation();
+                else{
+                    a = false;
+                    $(this).attr("flag", a);
+                }
+                var settingsName = $(this).parent().attr("for");
+                settings[settingsName] = a;
+                localStorage.setItem("lsaw_settings", JSON.stringify(settings));
             })
-            var userHtml = "";
-            var problemHtml = "";
-            var officialHtml = "";
-            var selectHtml = "";
-            var discussHtml = "";
-            var networkError = false;
-            var lastHtml = "";
-            var refreshInterval = setInterval(function(){
-                let Html = "";
-                if(networkError)
-                    Html = `<div><div style='text-align: center; margin-bottom: 10px; width: 100%; font-size: 20px;'>网络错误</div></div>`
+            $(".inputAreaSmall input").change(function(){
+                var a = Number($(this).val());
+                var settingsName = $(this).parent().parent().parent().attr("for");
+                settings[settingsName] = a;
+                localStorage.setItem("lsaw_settings", JSON.stringify(settings));
+            })
+            $(".searchAnywhereCloseSettings").click(function(){
+                $(".searchAnywhereSettings").css("opacity", "0");
+                setTimeout(() => {
+                    $(".searchAnywhereSettings").css("display", "none");
+                }, 200);
+            })
+            $(".searchAnywhereSettingsLink").click(function(){
+                $(".searchAnywhereSettings").css("display", "block");
+                setTimeout(() => {
+                    $(".searchAnywhereSettings").css("opacity", "1");
+                }, 20);
+            })
+
+            const getColorFromPercent = (x, opa) => {
+                let r = 0, g = 0, b = 0;
+                let rr = 231, gg = 76, bb = 60;
+                let rrr = 82, ggg = 196, bbb = 26;
+                // if(x < 0.5){
+                //  r = 255;
+                //  g = one * x;
+                // }
+                // else{
+                //  r = 255 - ((x - 0.5) * one);
+                //  g = 255;
+                // }
+                r = rr + (rrr - rr) * x;
+                g = gg + (ggg - gg) * x;
+                b = bb + (bbb - bb) * x;
+                r += (60 - r) * (1 - opa);
+                g += (60 - g) * (1 - opa);
+                b += (60 - b) * (1 - opa);
+                r = Math.floor(r);
+                g = Math.floor(g);
+                b = Math.floor(b);
+                return `rgb(${r}, ${g}, ${b})`;
+            };
+
+            const problemColors = [ "Gray", "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Black" ];
+            const problemNames = [ "暂无评定", "入门", "普及-", "普及/提高-", "普及+/提高", "提高+/省选-", "省选/NOI-", "NOI/NOI+/CTSC" ];
+            var searchTimeout = null;
+            var currentHoverCard = undefined;
+            const changeHoverCard = (x, scroll = true, align = false) => {
+                $(".searchCard.light").removeClass("light");
+                if(x != undefined && scroll)
+                    $(".searchAnywhereMainInput > input").blur();
+                if(x != undefined){
+                    x.addClass("light").focus(align);
+                    if(scroll){
+                        var heg = x[0].offsetTop;
+                        var prr = x.parent().parent();
+                        var scr = prr.scrollTop();
+                        var r = heg - x.outerHeight() + 5, l = r - prr.outerHeight() + x.outerHeight() + 10;
+                        scr = Math.max(l, Math.min(r, scr));
+                        prr.scrollTop(scr);
+                    }
+                }
+                if(scroll){ // remove mouse event
+                    $(".searchCard").unbind('mouseenter').unbind('mouseleave');
+                    $(document).mousemove(() => {
+                        $(document).unbind('mousemove');
+                        $(".searchCard").unbind('mouseenter').unbind('mouseleave').hover(function(){
+                            changeHoverCard($(this), false);
+                        }, function(){
+                            changeHoverCard(undefined, false);
+                        });
+                    })
+                }
+                currentHoverCard = x;
+            }
+            const searchInfo = () => {
+                searchTimeout = null;
+                var info = $(".inputArea > input").val();
+                info = $.trim(info);
+                if(info == ""){
+                    $(".searchAnywhereContent").html("");
+                    return;
+                }
+                //$(".searchAnywhereContent").html(`<div><div style='text-align: center; margin-bottom: 10px; width: 100%; font-size: 20px;'>加载中……</div></div>`);
+                $(".searchAnywhereContent > div").unbind('click').click((event) => {
+                    event.stopPropagation();
+                })
+                var userHtml = "";
+                var problemHtml = "";
+                var officialHtml = "";
+                var selectHtml = "";
+                var discussHtml = "";
+                var networkError = false;
+                var lastHtml = "";
+                var refreshInterval = setInterval(function(){
+                    let Html = "";
+                    if(networkError)
+                        Html = `<div><div style='text-align: center; margin-bottom: 10px; width: 100%; font-size: 20px;'>网络错误</div></div>`
                 else if(userHtml == "" && problemHtml == "" && officialHtml == "" && selectHtml == "" && discussHtml == "")
                     Html = `<div><div style='text-align: center; margin-bottom: 10px; width: 100%; font-size: 20px;'>未搜索到相关内容</div></div>`
                 else{
@@ -752,38 +769,38 @@
                         changeHoverCard(undefined, false);
                     });
                 }
-                if(Html!=lastHtml){
-                    $(".searchAnywhereContent").html(Html);
-                    lastHtml = Html;
+                    if(Html!=lastHtml){
+                        $(".searchAnywhereContent").html(Html);
+                        lastHtml = Html;
+                    }
+                },500);
+                const getProblemStatus = (x, y) => {
+                    if(!x && !y)
+                        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="icon svg-inline--fa fa-minus fa-w-14" data-v-303bbf52="" style="width: 16px; height: 16px; color: #aaa"><path data-v-1b44b3e6="" fill="currentColor" d="M416 208H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z" class=""></path></svg>`;
+                    if(!y)
+                        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 352 512" class="icon svg-inline--fa fa-times fa-w-11" data-v-303bbf52="" style="transform: scale(1.2); width: 16px; height: 16px; color: rgb(231, 76, 60);"><path data-v-1b44b3e6="" fill="currentColor" d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z" class=""></path></svg>`;
+                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="icon svg-inline--fa fa-check fa-w-16" data-v-303bbf52="" style="width: 16px; height: 16px; color: rgb(82, 196, 26);"><path data-v-1b44b3e6="" fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z" class=""></path></svg>`;
                 }
-            },500);
-            const getProblemStatus = (x, y) => {
-                if(!x && !y)
-                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="icon svg-inline--fa fa-minus fa-w-14" data-v-303bbf52="" style="width: 16px; height: 16px; color: #aaa"><path data-v-1b44b3e6="" fill="currentColor" d="M416 208H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z" class=""></path></svg>`;
-                if(!y)
-                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 352 512" class="icon svg-inline--fa fa-times fa-w-11" data-v-303bbf52="" style="transform: scale(1.2); width: 16px; height: 16px; color: rgb(231, 76, 60);"><path data-v-1b44b3e6="" fill="currentColor" d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z" class=""></path></svg>`;
-                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="icon svg-inline--fa fa-check fa-w-16" data-v-303bbf52="" style="width: 16px; height: 16px; color: rgb(82, 196, 26);"><path data-v-1b44b3e6="" fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z" class=""></path></svg>`;
-            }
-            const getCCFLevel = (x) => {
-                if(x == null || x < 3)
-                    return "";
-                var color = "";
-                if(x <= 5)
-                    color = "#5eb95e";
-                else if(x <= 7)
-                    color = "#07a2f1";
-                else
-                    color = "#f1c40f";
-                return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" style="margin: 0px 3px;" fill="${color}" style="margin-bottom: -3px;"><path d="M16 8C16 6.84375 15.25 5.84375 14.1875 5.4375C14.6562 4.4375 14.4688 3.1875 13.6562 2.34375C12.8125 1.53125 11.5625 1.34375 10.5625 1.8125C10.1562 0.75 9.15625 0 8 0C6.8125 0 5.8125 0.75 5.40625 1.8125C4.40625 1.34375 3.15625 1.53125 2.34375 2.34375C1.5 3.1875 1.3125 4.4375 1.78125 5.4375C0.71875 5.84375 0 6.84375 0 8C0 9.1875 0.71875 10.1875 1.78125 10.5938C1.3125 11.5938 1.5 12.8438 2.34375 13.6562C3.15625 14.5 4.40625 14.6875 5.40625 14.2188C5.8125 15.2812 6.8125 16 8 16C9.15625 16 10.1562 15.2812 10.5625 14.2188C11.5938 14.6875 12.8125 14.5 13.6562 13.6562C14.4688 12.8438 14.6562 11.5938 14.1875 10.5938C15.25 10.1875 16 9.1875 16 8ZM11.4688 6.625L7.375 10.6875C7.21875 10.8438 7 10.8125 6.875 10.6875L4.5 8.3125C4.375 8.1875 4.375 7.96875 4.5 7.8125L5.3125 7C5.46875 6.875 5.6875 6.875 5.8125 7.03125L7.125 8.34375L10.1562 5.34375C10.3125 5.1875 10.5312 5.1875 10.6562 5.34375L11.4688 6.15625C11.5938 6.28125 11.5938 6.5 11.4688 6.625Z"></path></svg>`
+                const getCCFLevel = (x) => {
+                    if(x == null || x < 3)
+                        return "";
+                    var color = "";
+                    if(x <= 5)
+                        color = "#5eb95e";
+                    else if(x <= 7)
+                        color = "#07a2f1";
+                    else
+                        color = "#f1c40f";
+                    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" style="margin: 0px 3px;" fill="${color}" style="margin-bottom: -3px;"><path d="M16 8C16 6.84375 15.25 5.84375 14.1875 5.4375C14.6562 4.4375 14.4688 3.1875 13.6562 2.34375C12.8125 1.53125 11.5625 1.34375 10.5625 1.8125C10.1562 0.75 9.15625 0 8 0C6.8125 0 5.8125 0.75 5.40625 1.8125C4.40625 1.34375 3.15625 1.53125 2.34375 2.34375C1.5 3.1875 1.3125 4.4375 1.78125 5.4375C0.71875 5.84375 0 6.84375 0 8C0 9.1875 0.71875 10.1875 1.78125 10.5938C1.3125 11.5938 1.5 12.8438 2.34375 13.6562C3.15625 14.5 4.40625 14.6875 5.40625 14.2188C5.8125 15.2812 6.8125 16 8 16C9.15625 16 10.1562 15.2812 10.5625 14.2188C11.5938 14.6875 12.8125 14.5 13.6562 13.6562C14.4688 12.8438 14.6562 11.5938 14.1875 10.5938C15.25 10.1875 16 9.1875 16 8ZM11.4688 6.625L7.375 10.6875C7.21875 10.8438 7 10.8125 6.875 10.6875L4.5 8.3125C4.375 8.1875 4.375 7.96875 4.5 7.8125L5.3125 7C5.46875 6.875 5.6875 6.875 5.8125 7.03125L7.125 8.34375L10.1562 5.34375C10.3125 5.1875 10.5312 5.1875 10.6562 5.34375L11.4688 6.15625C11.5938 6.28125 11.5938 6.5 11.4688 6.625Z"></path></svg>`
         }
-            if(settings.lsawUserDisplay != false)
-                $.ajax({
-                    url: `/api/user/search?keyword=${info}`,
-                    type: 'GET',
-                    success: function(json){
-                        json = json.users;
-                        if(json.length != 0 && json[0] != null){
-                            userHtml = `
+                if(settings.lsawUserDisplay != false)
+                    $.ajax({
+                        url: `/api/user/search?keyword=${info}`,
+                        type: 'GET',
+                        success: function(json){
+                            json = json.users;
+                            if(json.length != 0 && json[0] != null){
+                                userHtml = `
                         <div style='text-align: left; margin-bottom: 10px; width: 100%; font-size: 18px; font-weight: bold'>用户</div>
                     `;
                             json.forEach((item) => {
@@ -1014,125 +1031,125 @@
                 });
             }
         };
-        $(".searchAnywhereMainInput > input").unbind('input propertychange').on('input propertychange', function(){
-            if(searchTimeout != null)
-                clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(searchInfo, 500);
-        });
-        let searchAnywhereOpen = false;
-        let inject_interval = setInterval(function(){
-            if($('.search-wrap').length == 0) return;
-            let en = $('.user-nav .search-wrap').next();
-            $(".user-nav .search-wrap").remove();
-            en.css("margin-left", "10px");
-            en.unbind('click').click(function(){
-                if(! searchAnywhereOpen){
-                    $(".searchAnywhere").css("display", "block");
-                    setTimeout(() => {
-                        $(".searchAnywhere").css("opacity", "1");
-                        $(".searchAnywhereMainInput > input").focus();
-                    }, 20);
-                }
-                else{
-                    $(".searchAnywhere").css("opacity", "0");
-                    setTimeout(() => {
-                        $(".searchAnywhere").css("display", "none");
-                    }, 200);
-                }
-                searchAnywhereOpen = !searchAnywhereOpen;
+            $(".searchAnywhereMainInput > input").unbind('input propertychange').on('input propertychange', function(){
+                if(searchTimeout != null)
+                    clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(searchInfo, 500);
             });
-            clearInterval(inject_interval);
-        },500);
-        $(".searchAnywhere").unbind('click').click(() => {
-            $(".searchAnywhere").css("opacity", "0");
-            setTimeout(() => {
-                $(".searchAnywhere").css("display", "none");
-            }, 200);
-            searchAnywhereOpen = false;
-        })
-        $(".searchAnywhereMainInput").unbind('click').click((event) => {
-            event.stopPropagation();
-        })
-        $(document).keydown(function(event){
-            if((event.keyCode == 186)
-               && (event.ctrlKey || event.metaKey)){
-                if(! searchAnywhereOpen){
-                    $(".searchAnywhere").css("display", "block");
-                    setTimeout(() => {
-                        $(".searchAnywhere").css("opacity", "1");
-                        $(".searchAnywhereMainInput > input").focus();
-                    }, 20);
-                }
-                else{
-                    $(".searchAnywhere").css("opacity", "0");
-                    setTimeout(() => {
-                        $(".searchAnywhere").css("display", "none");
-                    }, 200);
-                }
-                searchAnywhereOpen = !searchAnywhereOpen;
-                event.preventDefault();
-            }
-            if(searchAnywhereOpen){
-                if(event.keyCode == 38){ // Up
-                    if(currentHoverCard == undefined){
-                        var lis = $(".searchCard");
-                        if(lis.length == 0)
+            let searchAnywhereOpen = false;
+            let inject_interval = setInterval(function(){
+                if($('.search-wrap').length == 0) return;
+                let en = $('.user-nav .search-wrap').next();
+                $(".user-nav .search-wrap").remove();
+                en.css("margin-left", "10px");
+                en.unbind('click').click(function(){
+                    if(! searchAnywhereOpen){
+                        $(".searchAnywhere").css("display", "block");
+                        setTimeout(() => {
+                            $(".searchAnywhere").css("opacity", "1");
                             $(".searchAnywhereMainInput > input").focus();
-                        else{
-                            currentHoverCard = lis.eq(lis.length - 1);
-                            changeHoverCard(currentHoverCard);
-                        }
+                        }, 20);
                     }
                     else{
-                        currentHoverCard = currentHoverCard.prev();
-                        while(1){
-                            if(currentHoverCard.length == 0 || currentHoverCard.hasClass("searchCard"))
-                                break;
-                            currentHoverCard = currentHoverCard.prev();
-                        }
-                        if(currentHoverCard.length == 0){
-                            $(".searchAnywhereMainInput > input").focus();
-                            currentHoverCard = undefined;
-                        }
-                        changeHoverCard(currentHoverCard);
+                        $(".searchAnywhere").css("opacity", "0");
+                        setTimeout(() => {
+                            $(".searchAnywhere").css("display", "none");
+                        }, 200);
                     }
+                    searchAnywhereOpen = !searchAnywhereOpen;
+                });
+                clearInterval(inject_interval);
+            },500);
+            $(".searchAnywhere").unbind('click').click(() => {
+                $(".searchAnywhere").css("opacity", "0");
+                setTimeout(() => {
+                    $(".searchAnywhere").css("display", "none");
+                }, 200);
+                searchAnywhereOpen = false;
+            })
+            $(".searchAnywhereMainInput").unbind('click').click((event) => {
+                event.stopPropagation();
+            })
+            $(document).keydown(function(event){
+                if((event.keyCode == 186)
+                   && (event.ctrlKey || event.metaKey)){
+                    if(! searchAnywhereOpen){
+                        $(".searchAnywhere").css("display", "block");
+                        setTimeout(() => {
+                            $(".searchAnywhere").css("opacity", "1");
+                            $(".searchAnywhereMainInput > input").focus();
+                        }, 20);
+                    }
+                    else{
+                        $(".searchAnywhere").css("opacity", "0");
+                        setTimeout(() => {
+                            $(".searchAnywhere").css("display", "none");
+                        }, 200);
+                    }
+                    searchAnywhereOpen = !searchAnywhereOpen;
                     event.preventDefault();
                 }
-                else if(event.keyCode == 40){ // Down
-                if(currentHoverCard == undefined){
-                    var lis = $(".searchCard");
-                    if(lis.length == 0)
-                         $(".searchAnywhereMainInput > input").focus();
-                    else{
-                        currentHoverCard = lis.eq(0);
-                        changeHoverCard(currentHoverCard);
+                if(searchAnywhereOpen){
+                    if(event.keyCode == 38){ // Up
+                        if(currentHoverCard == undefined){
+                            var lis = $(".searchCard");
+                            if(lis.length == 0)
+                                $(".searchAnywhereMainInput > input").focus();
+                            else{
+                                currentHoverCard = lis.eq(lis.length - 1);
+                                changeHoverCard(currentHoverCard);
+                            }
+                        }
+                        else{
+                            currentHoverCard = currentHoverCard.prev();
+                            while(1){
+                                if(currentHoverCard.length == 0 || currentHoverCard.hasClass("searchCard"))
+                                    break;
+                                currentHoverCard = currentHoverCard.prev();
+                            }
+                            if(currentHoverCard.length == 0){
+                                $(".searchAnywhereMainInput > input").focus();
+                                currentHoverCard = undefined;
+                            }
+                            changeHoverCard(currentHoverCard);
+                        }
+                        event.preventDefault();
                     }
-                }
-                else{
-                    currentHoverCard = currentHoverCard.next();
-                    while(1){
-                        if(currentHoverCard.length == 0 || currentHoverCard.hasClass("searchCard"))
-                            break;
-                        currentHoverCard = currentHoverCard.next();
+                    else if(event.keyCode == 40){ // Down
+                        if(currentHoverCard == undefined){
+                            var lis = $(".searchCard");
+                            if(lis.length == 0)
+                                $(".searchAnywhereMainInput > input").focus();
+                            else{
+                                currentHoverCard = lis.eq(0);
+                                changeHoverCard(currentHoverCard);
+                            }
+                        }
+                        else{
+                            currentHoverCard = currentHoverCard.next();
+                            while(1){
+                                if(currentHoverCard.length == 0 || currentHoverCard.hasClass("searchCard"))
+                                    break;
+                                currentHoverCard = currentHoverCard.next();
+                            }
+                            if(currentHoverCard.length == 0){
+                                $(".searchAnywhereMainInput > input").focus();
+                                currentHoverCard = undefined;
+                            }
+                            changeHoverCard(currentHoverCard);
+                        }
+                        event.preventDefault();
                     }
-                    if(currentHoverCard.length == 0){
+                    else if(event.keyCode == 13){ // Enter
+                        if(currentHoverCard != undefined)
+                            window.open(currentHoverCard.attr("href"), "_blank");
+                        event.preventDefault();
+                    }
+                    else if(event.keyCode == 9)
+                        event.preventDefault();
+                    else
                         $(".searchAnywhereMainInput > input").focus();
-                        currentHoverCard = undefined;
-                    }
-                    changeHoverCard(currentHoverCard);
                 }
-                event.preventDefault();
-            }
-            else if(event.keyCode == 13){ // Enter
-                if(currentHoverCard != undefined)
-                    window.open(currentHoverCard.attr("href"), "_blank");
-                event.preventDefault();
-            }
-            else if(event.keyCode == 9)
-                event.preventDefault();
-            else
-                $(".searchAnywhereMainInput > input").focus();
-        }
-    })
-    });
-})(window.jQuery.noConflict(true));
+            })
+        });
+    })(window.jQuery.noConflict(true));
