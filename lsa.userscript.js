@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Luogu Search AnyWhere
-// @namespace    https://greasyfork.org/
-// @version      0.3.4-X2
+// @namespace    https://greasyfork.org/zh-CN/scripts/442720/
+// @version      0.3.4-X3
 // @description  Search AnyWhere in Luogu!
 // @author       tiger2005 & d0j1a_1701
 // @match        https://www.luogu.com.cn/*
@@ -996,7 +996,7 @@
                                         type: 'GET',
                                         success: function(json){
                                             if(first==true){
-                                                discussHtml = `<div style='text-align: left; margin-bottom: 10px; width: 100%; font-size: 18px; font-weight: bold'>讨论</div>`;
+                                                discussHtml = `<div style='text-align: left; margin-bottom: 10px; width: 100%; font-size: 18px; font-weight: bold'>讨论<a href="https://luogulo.gq/search.php?s=${info}" style="cursor: pointer; float: right; font-weight: normal !important" class="searchShowProblems">查看所有 ${discuss_a.length} 个保存的讨论</a></div>`;
                                                 first = false;
                                             }
                                             json = json.users;
@@ -1006,7 +1006,7 @@
                                                         return;
                                                     if(item.color == "Cheater")
                                                         item.badge = "作弊者";
-                                                    console.info(`Discus:${username}:${a.innerHTML}`)
+                                                    //console.info(`Discus:${username}:${a.innerHTML}`)
                                                     discussHtml += `<a class="searchCard searchListCard" href='/discuss/${d_id}'>
                             <div class="searchListCardBody">
                                 <div>${a.innerHTML}</div>
